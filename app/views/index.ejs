@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCRD Planning Assistant</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>SCRD Planning Assistant</h1>
+    <p>Select a property on the map or search by address to chat about zoning, OCP, and subdivision rules.</p>
+  </header>
+
+  <main>
+    <section id="map-panel">
+      <div id="search-bar">
+        <input type="text" id="address-input" placeholder="Search address (e.g. 2720 Lower Rd)" maxlength="100" />
+        <button id="search-btn">Search</button>
+      </div>
+      <div id="map"></div>
+      <div id="property-info" class="hidden">
+        <h3 id="prop-address">—</h3>
+        <table id="prop-details">
+          <tr><td>PID</td><td id="prop-pid">—</td></tr>
+          <tr><td>Lot Size</td><td id="prop-lot-size">—</td></tr>
+          <tr><td>Zoning</td><td id="prop-zoning">—</td></tr>
+          <tr><td>OCP Land Use</td><td id="prop-ocp">—</td></tr>
+          <tr><td>Subdivision District</td><td id="prop-subdiv">—</td></tr>
+        </table>
+        <button id="chat-with-property">Chat about this property</button>
+      </div>
+    </section>
+
+    <section id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <button id="back-to-map">&larr; Map</button>
+        <span id="chat-property-label">—</span>
+      </div>
+      <div id="chat-messages"></div>
+      <form id="chat-form">
+        <textarea id="chat-input" placeholder="Ask about this property..." autocomplete="off" rows="3" maxlength="5000"></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"
+    integrity="sha384-twf8YFpk0FSzm0AmW2GRJjjnqIuQ2y86vZXh2roYI8O+kFbEBjSUDUT6U72w8shL"
+    crossorigin="anonymous"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
