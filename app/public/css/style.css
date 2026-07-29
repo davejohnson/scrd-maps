@@ -105,6 +105,10 @@ main {
   transition: background 0.15s;
 }
 #chat-with-property:hover { background: #234d24; }
+#chat-with-property:disabled {
+  background: #999;
+  cursor: wait;
+}
 
 /* Chat panel */
 #chat-panel {
@@ -243,9 +247,40 @@ main.chat-open #chat-panel { display: flex; }
 
 /* Mobile */
 @media (max-width: 768px) {
-  header { flex-direction: column; gap: 0.25rem; }
-  main { flex-direction: column; }
-  main.chat-open { flex-direction: column; }
-  main.chat-open #map-panel { flex: none; height: 40vh; }
-  #chat-panel { width: 100%; flex: 1; }
+  header { flex-direction: column; gap: 0.25rem; padding: 0.5rem 1rem; }
+  header p { display: none; }
+
+  main {
+    flex-direction: column;
+    height: calc(100vh - 36px);
+  }
+
+  #map-panel { flex: 1; min-height: 0; }
+
+  /* Chat takes over the whole screen on mobile */
+  #chat-panel {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    height: 100vh;
+  }
+
+  #chat-messages { padding: 0.75rem; }
+
+  #chat-form {
+    padding: 0.5rem;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  #chat-input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  #property-info { max-height: 40vh; overflow-y: auto; }
+
+  .message.assistant table { font-size: 0.75rem; }
+  .message.assistant { font-size: 0.85rem; }
 }

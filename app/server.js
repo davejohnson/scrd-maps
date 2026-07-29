@@ -29,6 +29,7 @@ app.use(helmet({
       connectSrc: ["'self'", "https://maps.scrd.ca"],
     },
   },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 // Body size limits

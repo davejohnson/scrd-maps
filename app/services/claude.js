@@ -1,6 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
+const { buildPropertyContextPrompt } = require('./property-context');
 
 const client = new Anthropic();
 
@@ -71,7 +72,7 @@ async function buildSystemPrompt(propertyContext) {
   if (propertyContext) {
     system.push({
       type: 'text',
-      text: `\n\nCURRENT PROPERTY CONTEXT:\n${JSON.stringify(propertyContext, null, 2)}`,
+      text: buildPropertyContextPrompt(propertyContext),
     });
   }
 
@@ -82,7 +83,7 @@ async function chat(messages, propertyContext) {
   const system = await buildSystemPrompt(propertyContext);
 
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: 'claude-fable-5',
     max_tokens: 4096,
     system,
     messages,

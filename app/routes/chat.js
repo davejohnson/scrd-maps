@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { Router } = require('express');
 const { chat } = require('../services/claude');
+const { sanitizePropertyContext } = require('../services/property-context');
 
 const router = Router();
 
@@ -19,29 +20,6 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
-
-function sanitizePropertyContext(ctx) {
-  if (!ctx || typeof ctx !== 'object') return null;
-  const allowed = ['address', 'pid', 'lot_size', 'zoning', 'zoning_code',
-                    'ocp', 'ocp_area', 'subdivision_district'];
-  const clean = {};
-  for (const key of allowed) {
-    if (key in ctx) {
-      clean[key] = String(ctx[key]).slice(0, 200);
-    }
-  }
-  // Neighbours: allow array, sanitize each
-  if (Array.isArray(ctx.neighbours)) {
-    clean.neighbours = ctx.neighbours.slice(0, 20).map(n => ({
-      direction: String(n.direction || '').slice(0, 20),
-      address: String(n.address || '').slice(0, 100),
-      zoning: String(n.zoning || '').slice(0, 100),
-      ocp: String(n.ocp || '').slice(0, 100),
-      subdivision_district: String(n.subdivision_district || '').slice(0, 10),
-    }));
-  }
-  return clean;
-}
 
 // POST /api/chat
 router.post('/', async (req, res) => {

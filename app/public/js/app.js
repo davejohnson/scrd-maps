@@ -108,11 +108,19 @@ async function selectParcelAt(lon, lat) {
     }
   }
 
+  // Highlight immediately with what we already have
+  highlightParcel(feat.geometry);
+  const bounds = highlightLayer.getBounds();
+  map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
+
+  // Show partial info right away
   const pid = feat.attributes.PID;
+  showPropertyPartial(feat.attributes);
+
+  // Load planning context + neighbours in background
   const propRes = await fetch(`/api/property/${pid}`);
   const propData = await propRes.json();
-
-  showProperty(propData, feat.geometry);
+  showPropertyFull(propData);
 }
 
 function dedupeStrataFeatures(features) {
@@ -156,10 +164,36 @@ function showParcelPicker(features) {
   });
 }
 
-function showProperty(data, geometry) {
+function showPropertyPartial(attrs) {
+  // Show what we have immediately from the ArcGIS parcel query
+  selectedProperty = {
+    address: attrs.CIVIC_ADDRESS,
+    pid: attrs.PID,
+    lot_size: attrs.LOT_SIZE,
+    zoning: 'Loading...',
+    zoning_code: null,
+    ocp: 'Loading...',
+    ocp_area: null,
+    subdivision_district: 'Loading...',
+    neighbours: [],
+  };
+
+  document.getElementById('prop-address').textContent = attrs.CIVIC_ADDRESS || 'No address';
+  document.getElementById('prop-pid').textContent = attrs.PID;
+  document.getElementById('prop-lot-size').textContent = attrs.LOT_SIZE || 'Strata (see strata plan)';
+  document.getElementById('prop-zoning').textContent = 'Loading...';
+  document.getElementById('prop-ocp').textContent = 'Loading...';
+  document.getElementById('prop-subdiv').textContent = 'Loading...';
+  chatWithBtn.disabled = true;
+  chatWithBtn.textContent = 'Loading property context...';
+
+  propertyInfo.classList.remove('hidden');
+}
+
+function showPropertyFull(data) {
   const { parcel, planning, neighbours } = data;
 
-  selectedProperty = {
+  selectedProperty = data.chatContext || {
     address: parcel.CIVIC_ADDRESS,
     pid: parcel.PID,
     lot_size: parcel.LOT_SIZE,
@@ -171,20 +205,11 @@ function showProperty(data, geometry) {
     neighbours: neighbours || [],
   };
 
-  document.getElementById('prop-address').textContent = parcel.CIVIC_ADDRESS || 'No address';
-  document.getElementById('prop-pid').textContent = parcel.PID;
-  document.getElementById('prop-lot-size').textContent = parcel.LOT_SIZE || 'Strata (see strata plan)';
   document.getElementById('prop-zoning').textContent = selectedProperty.zoning;
   document.getElementById('prop-ocp').textContent = selectedProperty.ocp;
   document.getElementById('prop-subdiv').textContent = selectedProperty.subdivision_district;
-
-  propertyInfo.classList.remove('hidden');
-
-  if (geometry) {
-    highlightParcel(geometry);
-    const bounds = highlightLayer.getBounds();
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
-  }
+  chatWithBtn.disabled = false;
+  chatWithBtn.textContent = 'Chat about this property';
 }
 
 // Address search
@@ -212,11 +237,16 @@ async function doSearch() {
     const feat = data.features[0];
     const pid = feat.attributes.PID;
 
-    // Get planning context
+    // Highlight and show partial immediately
+    highlightParcel(feat.geometry);
+    const bounds = highlightLayer.getBounds();
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
+    showPropertyPartial(feat.attributes);
+
+    // Load full details in background
     const propRes = await fetch(`/api/property/${pid}`);
     const propData = await propRes.json();
-
-    showProperty(propData, feat.geometry);
+    showPropertyFull(propData);
   } catch (err) {
     console.error('Search error:', err);
     alert('Search failed: ' + err.message);
@@ -238,19 +268,29 @@ chatWithBtn.addEventListener('click', () => {
   map.invalidateSize();
   chatInput.focus();
 
+  const surroundingCount = Array.isArray(selectedProperty.neighbours)
+    ? selectedProperty.neighbours.length
+    : 0;
+  const surroundingsSummary = surroundingCount
+    ? `I also have zoning, OCP, subdivision, and directional map context for **${surroundingCount} surrounding ${surroundingCount === 1 ? 'property' : 'properties'}**. You can refer to one naturally—for example, "the property to the north."`
+    : '';
+
   // Send initial context message
   addMessage('assistant', `Here's what I know about **${selectedProperty.address}**:\n\n` +
     `- **Zoning:** ${selectedProperty.zoning}\n` +
     `- **OCP Land Use:** ${selectedProperty.ocp}\n` +
     `- **Subdivision District:** ${selectedProperty.subdivision_district}\n` +
     `- **Lot Size:** ${selectedProperty.lot_size}\n\n` +
+    surroundingsSummary +
+    (surroundingsSummary ? '\n\n' : '') +
     `Ask me anything — what you can build, whether you can subdivide, run a business from home, add a suite, or anything else about your property. Plain language is fine, I'll figure out the bylaw stuff.`);
 });
 
 backBtn.addEventListener('click', () => {
   chatPanel.classList.add('hidden');
   document.querySelector('main').classList.remove('chat-open');
-  map.invalidateSize();
+  // Small delay so the layout settles before Leaflet recalculates
+  setTimeout(() => map.invalidateSize(), 100);
 });
 
 // Chat

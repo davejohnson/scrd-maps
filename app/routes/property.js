@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { searchParcelsRaw, getParcelByPID, getPlanningContext, getNeighbours } = require('../services/scrd-api');
+const { createPropertyContext } = require('../services/property-context');
 
 const router = Router();
 
@@ -33,7 +34,8 @@ router.get('/:pid', async (req, res) => {
       getNeighbours(parcel.geometry, parcel.PID),
     ]);
 
-    res.json({ parcel, planning, neighbours });
+    const chatContext = createPropertyContext(parcel, planning, neighbours);
+    res.json({ parcel, planning, neighbours, chatContext });
   } catch (err) {
     console.error('Property lookup error:', err);
     res.status(500).json({ error: 'Property lookup failed. Please try again.' });
